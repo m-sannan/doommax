@@ -20,7 +20,7 @@ const cards = [
     username: "Reel",
     blurb: "Short looping reel",
     meta: "65.2k likes · 1,015 comments",
-    video: "/videos/short1.mp4"
+    video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
   },
   {
     platform: "reddit",
@@ -45,7 +45,7 @@ const cards = [
     username: "@post",
     blurb: "Another reel from the feed",
     meta: "likes · comments",
-    video: "/videos/short2.mp4"
+    video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
   },
   {
     platform: "reddit",
@@ -64,7 +64,7 @@ const cards = [
     username: "Reel",
     blurb: "Looping short",
     meta: "high engagement",
-    video: "/videos/short3.mp4"
+    video: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
   }
 ];
 
@@ -91,7 +91,7 @@ function createCard(data, index) {
   if (data.video) {
     inner = `
       <div class="video-wrap">
-        <video src="${data.video}" muted loop playsinline preload="metadata"></video>
+        <video src="${data.video}" muted loop playsinline preload="auto" poster=""></video>
         <div class="play-icon"></div>
       </div>
       ${inner}
@@ -118,19 +118,27 @@ function setupVideoObserver() {
       entries.forEach((entry) => {
         const video = entry.target.querySelector("video");
         if (!video) return;
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-          video.play().catch(() => {});
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+          video.play().catch(() => {
+            // autoplay blocked — leave play icon
+          });
         } else {
           video.pause();
-          video.currentTime = 0;
         }
       });
     },
-    { threshold: 0.6 }
+    { threshold: [0.55] }
   );
 
   document.querySelectorAll(".card").forEach((card) => {
-    if (card.querySelector("video")) observer.observe(card);
+    const video = card.querySelector("video");
+    if (video) {
+      video.addEventListener("error", () => {
+        const wrap = card.querySelector(".video-wrap");
+        if (wrap) wrap.style.display = "none";
+      });
+      observer.observe(card);
+    }
   });
 }
 
