@@ -108,8 +108,11 @@ function createCard(data, index) {
   const platformClass = data.platform;
   const platformLabel = data.platform === "x" ? "X" : data.platform.toUpperCase();
 
+  const commentCount = data.comments ? data.comments.length : 0;
+  const hasComments = commentCount > 0;
+
   let commentsHtml = "";
-  if (data.comments && data.comments.length) {
+  if (hasComments) {
     commentsHtml = `<div class="comments">${data.comments.map(c => `<div class="comment"><strong>${c.user}</strong> ${c.text}</div>`).join("")}</div>`;
   }
 
@@ -119,7 +122,7 @@ function createCard(data, index) {
   } else if (data.video) {
     mediaHtml = `
       <div class="video-wrap">
-        <video src="${data.video}" muted loop playsinline preload="auto"></video>
+        <video src="${data.video}" muted loop playsinline preload="metadata"></video>
         <div class="play-icon"></div>
       </div>
     `;
@@ -127,16 +130,34 @@ function createCard(data, index) {
 
   let inner = `
     <span class="platform ${platformClass}">${platformLabel}</span>
-    <div class="card-content">
-      <div class="username">${data.username}</div>
-      <div class="blurb">${data.blurb.replace(/\n/g, "<br>")}</div>
-      ${mediaHtml}
-      <div class="meta">${data.meta}</div>
-      ${commentsHtml}
+    <div class="username">${data.username}</div>
+    <div class="blurb">${data.blurb.replace(/\n/g, "<br>")}</div>
+    ${mediaHtml}
+    <div class="actions">
+      <div class="action comment" data-has-comments="${hasComments}">
+        <span>💬</span>
+        <span>${commentCount || "Comment"}</span>
+      </div>
+      <div class="action">
+        <span>♡</span>
+        <span>${data.meta.split("·")[0].trim()}</span>
+      </div>
     </div>
+    <div class="meta">${data.meta}</div>
+    ${commentsHtml}
   `;
 
   el.innerHTML = inner;
+
+  const commentBtn = el.querySelector(".action.comment");
+  const commentsEl = el.querySelector(".comments");
+  if (commentBtn && commentsEl) {
+    commentBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      commentsEl.classList.toggle("open");
+    });
+  }
+
   return el;
 }
 
@@ -179,14 +200,8 @@ function setupVideoObserver() {
 }
 
 function setupInfiniteScroll() {
-  const cardHeight = window.innerHeight;
-  const singleSetHeight = cards.length * cardHeight;
-
-  feed.addEventListener("scroll", () => {
-    if (feed.scrollTop >= singleSetHeight) {
-      feed.scrollTop -= singleSetHeight;
-    }
-  });
+  // Soft infinite: just keep scrolling naturally; duplication already gives length
+  // No forced reset that breaks desktop layout
 }
 
 function setupEmail() {
